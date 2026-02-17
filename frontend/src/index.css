@@ -1,0 +1,106 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Nata+Sans:wght@100..900&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Philosopher:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Syne:wght@400..800&display=swap");
+
+@import "tailwindcss";
+
+@theme {
+  --color-primary: var(--color-primary);
+  --color-bg: var(--color-bg);
+  --color-text: var(--color-text);
+  --color-card: var(--color-card);
+  --color-border: var(--color-border);
+  --color-soft-white: var(--color-soft-white);
+  --radius-squircle: 24px;
+}
+
+:root {
+  /* Noir Premium Theme */
+  --color-primary: #000000;
+  --color-bg: #FFFFFF;
+  --color-text: #000000;
+  --color-card: #FFFFFF;
+  --color-border: #E5E7EB;
+  --color-noir-deep: #0A0A0A;
+  --color-noir-accent: #1A1A1A;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: "Syne", sans-serif;
+  font-weight: 400;
+  /* Normal */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Fix stretched fonts globally by ensuring normal tracking unless specified */
+* {
+  letter-spacing: normal;
+}
+
+/* Component Styles */
+.card-squircle {
+  border-radius: var(--radius-squircle);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.btn-squircle {
+  border-radius: 12px;
+  /* Smaller squircle for buttons */
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-noir {
+  background: linear-gradient(180deg, #000000 0%, #1A1A1A 100%);
+}
+
+.sidebar-item-active-noir {
+  background: #FFFFFF;
+  color: #000000;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.gradient-text-noir {
+  background: linear-gradient(to right, #000000, #4B5563);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Standardized Noir Inputs */
+.input-noir {
+  @apply w-full px-5 py-3.5 rounded-2xl bg-zinc-50 border border-black/5 text-black text-sm;
+  @apply transition-all duration-300 outline-none font-medium;
+  @apply placeholder:text-zinc-300;
+}
+
+.input-noir:focus {
+  @apply bg-white ring-4 ring-black/5 border-black/10;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
