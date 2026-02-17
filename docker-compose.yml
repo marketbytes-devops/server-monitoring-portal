@@ -11,30 +11,19 @@ services:
       MYSQL_ROOT_PASSWORD: root_password
     volumes:
       - db_data:/var/lib/mysql
-    networks:
-      - monitor_network
 
   backend:
     build: ./backend
     restart: always
-    command: /app/entrypoint.sh
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
-    environment:
-      DB_ENGINE: django.db.backends.mysql
-      DB_NAME: monitor_portal_db
-      DB_USER: monitor_user
-      DB_PASSWORD: monitor_password
-      DB_HOST: db
-      DB_PORT: 3306
-      DEBUG: 'False'
-      ALLOWED_HOSTS: 'backendmbinfrawatch.marketbytes.in'
-      SECRET_KEY: 'CHANGE_THIS_NOW'
+    env_file:
+      - ./backend/.env
     depends_on:
       - db
-    networks:
-      - monitor_network
+    expose:
+      - "8000"
 
   frontend:
     build:
@@ -42,11 +31,10 @@ services:
       args:
         VITE_API_URL: https://backendmbinfrawatch.marketbytes.in
     restart: always
-    networks:
-      - monitor_network
-
-networks:
-  monitor_network:
+    expose:
+      - "80"
+    depends_on:
+      - backend
 
 volumes:
   db_data:
