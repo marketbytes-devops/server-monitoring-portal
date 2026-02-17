@@ -24,5 +24,9 @@ RUN pip install gunicorn
 # Copy project
 COPY . /app/
 
-# Run gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "config.wsgi:application"]
+# Copy and set up entrypoint
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+# Run entrypoint
+ENTRYPOINT ["/app/entrypoint.sh"]
