@@ -22,8 +22,8 @@ services:
       - ./backend/.env
     depends_on:
       - db
-    expose:
-      - "8000"
+    ports:
+      - "6300:8000"
 
   frontend:
     build:
@@ -31,10 +31,10 @@ services:
       args:
         VITE_API_URL: https://backendmbinfrawatch.marketbytes.in
     restart: always
-    expose:
-      - "80"
     depends_on:
       - backend
+    ports:
+      - "6301:80"
 
 volumes:
   db_data:
