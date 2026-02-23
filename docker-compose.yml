@@ -4,14 +4,14 @@ services:
   db:
     image: mysql:8.0
     restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    env_file:
+      - ./backend/.env
     environment:
-      MYSQL_DATABASE: monitor_portal_db
-      MYSQL_USER: monitor_user
-      MYSQL_PASSWORD: monitor_password
-      MYSQL_ROOT_PASSWORD: root_password
-    # Tip: To use variables from .env here, you can use:
-    # MYSQL_PASSWORD: ${DB_PASSWORD}
-    # But for now, let's ensure they match the backend's defaults.
+      MYSQL_DATABASE: ${DB_NAME:-monitor_portal_db}
+      MYSQL_USER: ${DB_USER:-monitor_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-monitor_password}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
