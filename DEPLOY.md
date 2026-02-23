@@ -77,7 +77,6 @@ server {
 
 # Backend: backendmbinfrawatch.marketbytes.in
 server {
-    listen 80;
     server_name backendmbinfrawatch.marketbytes.in;
 
     location / {
@@ -87,16 +86,11 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
-
-    location /static/ {
-        alias /path/to/your/project/backend/staticfiles/;
-    }
-
-    location /media/ {
-        alias /path/to/your/project/backend/media/;
-    }
 }
 ```
+
+> [!NOTE]
+> We skip the `/static/` and `/media/` aliases on the host Nginx. Instead, we let **WhiteNoise** inside the Django container serve them. This prevents permission errors where Nginx might be blocked from accessing your `/root/` folder.
 
 Enable the site and restart Nginx:
 ```bash
