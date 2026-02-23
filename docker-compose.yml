@@ -11,6 +11,8 @@ services:
       MYSQL_ROOT_PASSWORD: root_password
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - monitor_network
 
   backend:
     build: ./backend
@@ -20,10 +22,14 @@ services:
       - media_volume:/app/media
     env_file:
       - ./backend/.env
+    environment:
+      - DB_HOST=db
     depends_on:
       - db
     ports:
       - "6300:8000"
+    networks:
+      - monitor_network
 
   frontend:
     build:
@@ -35,6 +41,12 @@ services:
       - backend
     ports:
       - "6301:80"
+    networks:
+      - monitor_network
+
+networks:
+  monitor_network:
+    driver: bridge
 
 volumes:
   mysql_data:

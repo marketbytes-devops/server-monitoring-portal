@@ -56,22 +56,65 @@ docker-compose up -d --build
     docker-compose exec backend python manage.py collectstatic
     ```
 
-## HTTPS (SSL) - Highly Recommended
+## Step 5: Nginx Configuration (On VPS Host)
 
-To enable HTTPS for both domains:
+Create a new Nginx configuration file: `/etc/nginx/sites-available/mbinfrawatch`
 
-1.  Install Certbot on the host machine:
-    ```bash
-    apt install certbot
-    ```
-2.  Stop Nginx (if running on host) or stop the containers temporarily if they bind port 80.
-    ```bash
-    docker-compose down
-    ```
-3.  Obtain certificates:
-    ```bash
-    certbot certonly --standalone -d mbinfrawatch.marketbytes.in -d backendmbinfrawatch.marketbytes.in
-    ```
-4.  Update `frontend/nginx.conf` to include listen 443 blocks and point to the certificates in `/etc/letsencrypt/live/...`. You will need to mount these volumes in `docker-compose.yml`.
+```nginx
+# Frontend: mbinfrawatch.marketbytes.in
+server {
+    listen 80;
+    server_name mbinfrawatch.marketbytes.in;
 
-**Alternatively (Easier)**: Use Cloudflare for DNS and enable strict SSL encryption mode, letting Cloudflare handle the certificates. You still need port 80 open on your VPS.
+    location / {
+        proxy_pass http://localhost:6301;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# Backend: backendmbinfrawatch.marketbytes.in
+server {
+    listen 80;
+    server_name backendmbinfrawatch.marketbytes.in;
+
+    location / {
+        proxy_pass http://localhost:6300;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /static/ {
+        alias /path/to/your/project/backend/staticfiles/;
+    }
+
+    location /media/ {
+        alias /path/to/your/project/backend/media/;
+    }
+}
+```
+
+Enable the site and restart Nginx:
+```bash
+ln -s /etc/nginx/sites-available/mbinfrawatch /etc/nginx/sites-enabled/
+nginx -t
+systemctl restart nginx
+```
+
+## Step 6: SSL with Certbot
+
+```bash
+apt install certbot python3-certbot-nginx
+certbot --nginx -d mbinfrawatch.marketbytes.in -d backendmbinfrawatch.marketbytes.in
+```
+
+## Production Security Checklist
+
+1. [ ] `DEBUG=False` in `backend/.env`
+2. [ ] `SECRET_KEY` changed to a random string.
+3. [ ] `ALLOWED_HOSTS` includes your domain.
+4. [ ] CSRF and Session cookies are secure (set automatically by `settings.py` when `DEBUG=False`).
