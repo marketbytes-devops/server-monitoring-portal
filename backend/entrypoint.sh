@@ -17,7 +17,7 @@ try:
 except Exception as e:
     print(f'MySQL not ready: {e}')
     exit(1)
-" 2>/dev/null; do
+" ; do
     echo "MySQL is unavailable - sleeping 3s..."
     sleep 3
 done
