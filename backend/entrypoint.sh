@@ -2,23 +2,8 @@
 set -e
 
 echo "Waiting for MySQL to be ready..."
-while ! python -c "
-import MySQLdb
-import os
-try:
-    MySQLdb.connect(
-        host=os.getenv('DB_HOST', 'db'),
-        user=os.getenv('DB_USER', 'monitor_user'),
-        passwd=os.getenv('DB_PASSWORD', 'monitor_password'),
-        db=os.getenv('DB_NAME', 'monitor_portal_db'),
-        port=int(os.getenv('DB_PORT', '3306'))
-    )
-    print('MySQL is ready!')
-except Exception as e:
-    print(f'MySQL not ready: {e}')
-    exit(1)
-" ; do
-    echo "MySQL is unavailable - sleeping 3s..."
+while ! python manage.py check > /dev/null 2>&1; do
+    echo "MySQL is unavailable or system initializing - sleeping 3s..."
     sleep 3
 done
 
