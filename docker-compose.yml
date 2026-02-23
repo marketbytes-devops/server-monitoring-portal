@@ -21,8 +21,8 @@ services:
     build: ./backend
     restart: always
     volumes:
-      - static_volume:/app/staticfiles
-      - media_volume:/app/media
+      - ./backend/staticfiles:/app/staticfiles
+      - ./backend/media:/app/media
     env_file:
       - ./backend/.env
     environment:
@@ -53,5 +53,3 @@ networks:
 
 volumes:
   mysql_data:
-  static_volume:
-  media_volume:
