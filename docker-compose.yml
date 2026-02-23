@@ -9,6 +9,9 @@ services:
       MYSQL_USER: monitor_user
       MYSQL_PASSWORD: monitor_password
       MYSQL_ROOT_PASSWORD: root_password
+    # Tip: To use variables from .env here, you can use:
+    # MYSQL_PASSWORD: ${DB_PASSWORD}
+    # But for now, let's ensure they match the backend's defaults.
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
