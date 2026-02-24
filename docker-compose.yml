@@ -31,6 +31,20 @@ services:
     networks:
       - monitor_network
 
+  agent:
+    container_name: monitoring-agent
+    build: ./backend
+    restart: always
+    command: python monitoring_agent.py
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=db
+    depends_on:
+      - db
+    networks:
+      - monitor_network
+
   frontend:
     container_name: monitoring-frontend
     build:

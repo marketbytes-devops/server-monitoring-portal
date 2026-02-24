@@ -50,13 +50,19 @@ class Command(BaseCommand):
 
                 end_time = time.time()
                 duration = end_time - start_time
+                
+                self.stdout.write(f"  Result: {'UP' if is_up else 'DOWN'} | Latency: {duration:.3f}s | Error: {error_message}")
 
-                if url_obj.check_ssl and url_obj.url and url_obj.url.startswith('https'):
+                if url_obj.check_ssl and url_obj.url and url_obj.url.lower().startswith('https'):
                     self.perform_ssl_check(url_obj)
 
                 metrics = None
-                if url_obj.category == 'SSH':
-                    is_up, metrics, error_message = self.check_ssh(url_obj)
+                if url_obj.category == 'SSH' and is_up:
+                    success, ssh_metrics, ssh_error = self.check_ssh(url_obj)
+                    if success:
+                        metrics = ssh_metrics
+                    else:
+                        error_message = ssh_error
 
                 UptimeRecord.objects.create(
                     url=url_obj,
@@ -73,9 +79,10 @@ class Command(BaseCommand):
                 self.manage_incident(url_obj, is_up, error_message or f"Status Code: {status_code}")
 
             except Exception as e:
+                self.stdout.write(self.style.ERROR(f"  Critical check error: {str(e)}"))
                 self.manage_incident(url_obj, False, str(e))
         
-        self.stdout.write(self.style.SUCCESS('Synchronized Pulse perimeter successfully'))
+        self.stdout.write(self.style.SUCCESS(f'Synchronized Pulse perimeter successfully at {timezone.now()}'))
 
     def manage_incident(self, url_obj, currently_up, error_msg):
         active_incident = Incident.objects.filter(monitor=url_obj, status='OPEN').first()
@@ -135,10 +142,22 @@ class Command(BaseCommand):
                         log_type='INFO'
                     )
 
+    def _get_host(self, url):
+        # Case intensive strip of protocol
+        host = url
+        if host.lower().startswith('http://'):
+            host = host[7:]
+        elif host.lower().startswith('https://'):
+            host = host[8:]
+        
+        # Strip path and port
+        return host.split('/')[0].split(':')[0]
+
     def check_http(self, url_obj):
         try:
             method = url_obj.http_method or 'GET'
-            response = requests.request(method, url_obj.url, timeout=url_obj.timeout or 10)
+            # Requests is already case-insensitive for schemes
+            response = requests.request(method, url_obj.url.strip(), timeout=url_obj.timeout or 10)
             is_up = response.status_code == (url_obj.expected_status_code or 200)
             if not is_up and 200 <= response.status_code < 400 and not url_obj.expected_status_code:
                 is_up = True
@@ -147,17 +166,18 @@ class Command(BaseCommand):
             return False, None, str(e)
 
     def check_ping(self, url_obj):
-        host = url_obj.url.replace('http://', '').replace('https://', '').split('/')[0].split(':')[0]
+        host = self._get_host(url_obj.url)
         try:
             param = '-n' if subprocess.os.name == 'nt' else '-c'
             command = ['ping', param, '1', host]
-            is_up = subprocess.call(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) == 0
+            result = subprocess.call(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            is_up = result == 0
             return is_up, None if is_up else "Ping timeout"
         except Exception as e:
             return False, str(e)
 
     def check_port(self, url_obj):
-        host = url_obj.url.replace('http://', '').replace('https://', '').split('/')[0].split(':')[0]
+        host = self._get_host(url_obj.url)
         port = url_obj.port or 80
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -170,7 +190,7 @@ class Command(BaseCommand):
 
     def check_keyword(self, url_obj):
         try:
-            response = requests.get(url_obj.url, timeout=10)
+            response = requests.get(url_obj.url.strip(), timeout=10)
             if 200 <= response.status_code < 400:
                 if url_obj.keyword and url_obj.keyword in response.text:
                     return True, response.status_code, None
@@ -187,7 +207,7 @@ class Command(BaseCommand):
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             
-            host = url_obj.url.replace('http://', '').replace('https://', '').split('/')[0].split(':')[0]
+            host = self._get_host(url_obj.url)
             port = url_obj.ssh_port or 22
             username = url_obj.ssh_username or 'root'
             
@@ -197,13 +217,15 @@ class Command(BaseCommand):
                 try:
                     pkey = paramiko.RSAKey.from_private_key(key_file)
                 except:
-                    key_file.seek(0)
-                    pkey = paramiko.Ed25519Key.from_private_key(key_file)
+                    try:
+                        key_file.seek(0)
+                        pkey = paramiko.Ed25519Key.from_private_key(key_file)
+                    except:
+                        client.close()
+                        return False, None, "Unsupported SSH Key type"
                 
                 client.connect(host, port=port, username=username, pkey=pkey, timeout=10)
-            else:
-                return False, None, "SSH Key missing for perimeter sync"
-            
+                
                 # Gather metrics
                 # Command: loadavg, RAM %, Disk %, CPU %, Uptime
                 cmd = "cat /proc/loadavg | awk '{print $1}'; free -m | awk 'NR==2{printf \"%.2f\", $3*100/$2 }'; df -h / | awk 'NR==2{print $5}' | sed 's/%//'; top -bn1 | grep 'Cpu(s)' | sed 's/.*, *\\([0-9.]*\\)%* id.*/\\1/' | awk '{print 100 - $1}'; uptime -p"
@@ -220,13 +242,15 @@ class Command(BaseCommand):
                         "uptime": results[4] if results[4] else "Unknown"
                     }
                     return True, metrics, None
-            return True, {}, "Incomplete metrics gathered"
+                return True, {}, "Incomplete metrics gathered"
+            else:
+                return False, None, "SSH Key missing for perimeter sync"
             
         except Exception as e:
             return False, None, f"SSH sync failure: {str(e)}"
 
     def perform_ssl_check(self, url_obj):
-        host = url_obj.url.replace('https://', '').split('/')[0].split(':')[0]
+        host = self._get_host(url_obj.url)
         try:
             context = ssl.create_default_context()
             with socket.create_connection((host, 443), timeout=5) as sock:

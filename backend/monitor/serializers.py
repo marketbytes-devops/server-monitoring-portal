@@ -53,6 +53,7 @@ class MonitoredURLSerializer(serializers.ModelSerializer):
     uptime_365d = serializers.SerializerMethodField()
     recent_incidents = serializers.SerializerMethodField()
     response_times_history = serializers.SerializerMethodField()
+    uptime_history = serializers.SerializerMethodField()
     stats = serializers.SerializerMethodField()
 
     class Meta:
@@ -96,6 +97,11 @@ class MonitoredURLSerializer(serializers.ModelSerializer):
         # Return last 30 successful check response times in ms
         records = obj.records.filter(is_up=True).order_by('-checked_at')[:30]
         return [round(r.response_time * 1000, 1) for r in reversed(records)]
+
+    def get_uptime_history(self, obj):
+        # Return last 60 check statuses
+        records = obj.records.order_by('-checked_at')[:60]
+        return [r.is_up for r in reversed(records)]
 
     def get_stats(self, obj):
         from django.db.models import Avg, Min, Max

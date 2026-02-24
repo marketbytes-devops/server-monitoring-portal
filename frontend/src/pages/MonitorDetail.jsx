@@ -147,10 +147,20 @@ const MonitorDetail = () => {
                     </div>
                 </div>
 
-                <div className="flex gap-1 h-12">
-                    {[...Array(60)].map((_, i) => (
-                        <div key={i} className={`flex-1 rounded-sm opacity-90 hover:opacity-100 transition-opacity cursor-help ${isUp ? 'bg-black' : 'bg-red-500'}`} title={`Pulse OK`}></div>
-                    ))}
+                <div className="flex gap-1 h-12 items-center justify-center">
+                    {monitor.uptime_history && monitor.uptime_history.length > 0 ? (
+                        monitor.uptime_history.map((status, i) => (
+                            <div
+                                key={i}
+                                className={`flex-1 h-full rounded-sm opacity-90 hover:opacity-100 transition-opacity cursor-help ${status ? 'bg-black' : 'bg-red-500'}`}
+                                title={status ? `Pulse OK` : `Pulse Failure`}
+                            ></div>
+                        ))
+                    ) : (
+                        <div className="flex items-center justify-center w-full h-full bg-zinc-50 rounded-2xl border border-dashed border-zinc-200">
+                            <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest italic">Waiting for initial pulse perimeter sync...</span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-12 pt-8 border-t border-zinc-50">
