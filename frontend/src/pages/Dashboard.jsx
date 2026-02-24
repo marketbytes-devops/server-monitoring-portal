@@ -154,9 +154,14 @@ const Dashboard = () => {
                                         </div>
                                     </div>
                                     <div className="flex items-center space-x-12">
-                                        {!mon.last_record?.is_up && mon.last_record && (
+                                        {mon.last_record?.is_up ? (
                                             <div className="text-right hidden sm:block">
-                                                <p className="text-[10px] text-red-500 font-medium uppercase tracking-widest leading-none">Offline</p>
+                                                <p className="text-[10px] text-zinc-900 font-bold uppercase tracking-[0.2em] leading-none mb-1">Online</p>
+                                                <p className="text-[8px] text-zinc-400 font-medium uppercase tracking-widest">Active Pulse</p>
+                                            </div>
+                                        ) : mon.last_record && (
+                                            <div className="text-right hidden sm:block">
+                                                <p className="text-[10px] text-red-500 font-bold uppercase tracking-[0.2em] leading-none mb-1">Offline</p>
                                                 <p className="text-[8px] text-zinc-400 mt-1 truncate max-w-[100px]">{mon.last_record.error_message}</p>
                                             </div>
                                         )}

@@ -99,16 +99,16 @@ const MonitorDetail = () => {
             <div className="space-y-4">
                 <div className="flex items-center space-x-4">
                     <h1 className="text-4xl font-medium text-black uppercase tracking-tighter leading-none">
-                        {monitor.name}<span className="text-zinc-300">.</span>{monitor.category === 'SSH' ? 'Server' : 'Node'}
+                        {monitor.name}<span className="text-zinc-300">.</span>Node
                     </h1>
                     <span className={`px-4 py-1 rounded-xl text-[10px] font-bold uppercase tracking-widest ${isUp ? 'bg-black text-white' : 'bg-red-500 text-white animate-pulse'}`}>
-                        {isUp ? 'ACTIVE' : 'OFFLINE'}
+                        {isUp ? 'ONLINE' : 'OFFLINE'}
                     </span>
                 </div>
                 <div className="flex items-center space-x-3 text-[10px] text-zinc-600 font-medium uppercase tracking-[0.4em]">
                     <span>{monitor.url}</span>
                     <span className="text-zinc-300">//</span>
-                    <span>{monitor.category === 'SSH' ? 'SSH PERIMETER' : monitor.monitor_type}</span>
+                    <span>{monitor.monitor_type}</span>
                 </div>
             </div>
 
@@ -116,7 +116,7 @@ const MonitorDetail = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <SummaryBox
                     title="Current Status"
-                    value={isUp ? 'Currently Up' : 'Currently Down'}
+                    value={isUp ? 'Currently Online' : 'Currently Down'}
                     subValue={isUp ? `System heartbeat operational` : `Detected pulse failure`}
                     type={isUp ? 'success' : 'error'}
                 />
@@ -210,155 +210,63 @@ const MonitorDetail = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Node Identity Card (SSH Only) */}
-                {monitor.category === 'SSH' && (
-                    <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/2 border border-black/5 space-y-8">
-                        <div className="flex items-center space-x-3">
-                            <CommandLineIcon className="w-5 h-5 text-zinc-400" />
-                            <h3 className="text-lg font-medium text-black uppercase tracking-tight">Node Identity</h3>
-                        </div>
-                        <div className="space-y-6">
-                            <IdentityItem label="Authorized User" value={monitor.ssh_username || 'root'} />
-                            <IdentityItem label="Service Port" value="22 (Standard)" />
-                            <IdentityItem label="Authentication" value="RSA-4096 / Ed25519" />
-                            <div className="pt-4 border-t border-zinc-50 flex items-center justify-between">
-                                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">RSA Identity Fingerprint</span>
-                                <span className="text-[9px] font-mono text-zinc-400">SHA256:8x...2v9k</span>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Domain & SSL Info (Sites) / Security Info (SSH) */}
+            <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
+                {/* Domain & SSL Info (Sites) */}
                 <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/2 border border-black/5 space-y-10">
                     <div className="flex items-center space-x-3">
                         <ShieldCheckIcon className="w-5 h-5 text-zinc-400" />
                         <h3 className="text-lg font-medium text-black uppercase tracking-tight">
-                            {monitor.category === 'SSH' ? 'Security Protocol' : 'Security & Domain'}
+                            Security & Domain
                         </h3>
                     </div>
                     <div className="space-y-8">
-                        {monitor.category !== 'SSH' ? (
-                            <>
-                                <div>
-                                    <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-3">Domain Validation</p>
-                                    <div className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl border border-black/5">
-                                        <span className="text-xs font-medium text-black">
-                                            {domainDays !== null ? `Expires in ${domainDays} days` : 'Monitoring active'}
-                                        </span>
-                                        <span className="text-[8px] font-bold text-black uppercase tracking-widest">
-                                            {domainDays !== null ? 'Verified' : 'Active'}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-3">SSL Certificate</p>
-                                    <div className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl border border-black/5">
-                                        <span className="text-xs font-medium text-black">
-                                            {sslDays !== null ? `Expires in ${sslDays} days` : 'Scanning...'}
-                                            {monitor.ssl_issuer && <span className="text-zinc-400 ml-1">({monitor.ssl_issuer})</span>}
-                                        </span>
-                                        <span className="text-[8px] font-bold text-black uppercase tracking-widest">
-                                            {sslDays !== null && sslDays > 0 ? 'Valid' : 'Checking'}
-                                        </span>
-                                    </div>
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <SecurityFeature title="Encrypted Transport" status="ENABLED" desc="AES-256-GCM symmetric encryption active." />
-                                <SecurityFeature title="Identity Validation" status="PKI-KEYS" desc="Authorized via cryptographically secure keys." />
-                                <SecurityFeature title="Host Verification" status="VERIFIED" desc="Host signature matches system records." />
-                            </>
-                        )}
+                        <div>
+                            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-3">Domain Validation</p>
+                            <div className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl border border-black/5">
+                                <span className="text-xs font-medium text-black">
+                                    {domainDays !== null ? `Expires in ${domainDays} days` : 'Monitoring active'}
+                                </span>
+                                <span className="text-[8px] font-bold text-black uppercase tracking-widest">
+                                    {domainDays !== null ? 'Verified' : 'Active'}
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-3">SSL Certificate</p>
+                            <div className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl border border-black/5">
+                                <span className="text-xs font-medium text-black">
+                                    {sslDays !== null ? `Expires in ${sslDays} days` : 'Scanning...'}
+                                    {monitor.ssl_issuer && <span className="text-zinc-400 ml-1">({monitor.ssl_issuer})</span>}
+                                </span>
+                                <span className="text-[8px] font-bold text-black uppercase tracking-widest">
+                                    {sslDays !== null && sslDays > 0 ? 'Valid' : 'Checking'}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Server Health Metrics (SSH Only) */}
-                {monitor.category === 'SSH' && (
-                    <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/2 border border-black/5 space-y-8 lg:col-span-2">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                                <CpuChipIcon className="w-5 h-5 text-zinc-400" />
-                                <h3 className="text-lg font-medium text-black uppercase tracking-tight">Server Health Matrix</h3>
-                            </div>
-                            {monitor.last_record?.system_uptime && (
-                                <div className="flex items-center space-x-2 px-4 py-1.5 bg-zinc-50 rounded-xl border border-black/5">
-                                    <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-widest">Uptime:</span>
-                                    <span className="text-[10px] font-medium text-black">{monitor.last_record.system_uptime}</span>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <MetricGauge
-                                label="CPU LOAD"
-                                value={monitor.last_record?.cpu_usage || 0}
-                                icon={<CpuChipIcon className="w-5 h-5" />}
-                            />
-                            <MetricGauge
-                                label="RAM UTILIZATION"
-                                value={monitor.last_record?.ram_usage || 0}
-                                icon={<CircleStackIcon className="w-5 h-5" />}
-                            />
-                            <MetricGauge
-                                label="DISK CONSUMPTION"
-                                value={monitor.last_record?.disk_usage || 0}
-                                icon={<CommandLineIcon className="w-5 h-5" />}
-                            />
-                        </div>
+                {/* Latency Map */}
+                <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/2 border border-black/5 space-y-8">
+                    <div className="flex items-center space-x-3">
+                        <MapIcon className="w-5 h-5 text-zinc-400" />
+                        <h3 className="text-lg font-medium text-black uppercase tracking-tight">Regions Pulse</h3>
                     </div>
-                )}
-
-                {/* Latency Map (Hide or move if SSH) */}
-                {monitor.category !== 'SSH' && (
-                    <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/2 border border-black/5 space-y-8">
-                        <div className="flex items-center space-x-3">
-                            <MapIcon className="w-5 h-5 text-zinc-400" />
-                            <h3 className="text-lg font-medium text-black uppercase tracking-tight">Regions Pulse</h3>
-                        </div>
-                        <div className="relative group">
-                            <div className="bg-zinc-50 rounded-3xl aspect-video flex items-center justify-center overflow-hidden border border-black/5">
-                                <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#000_1px,transparent_1px)] bg-size:20px_20px"></div>
-                                <div className="space-y-4 text-center z-10">
-                                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Global Distribution Map</p>
-                                    <div className="flex gap-4">
-                                        <RegionMarker city="Nuremberg" latency={`${lastLatency}ms`} active />
-                                        <RegionMarker city="Frankfurt" latency={`${Math.round(lastLatency * 1.05)}ms`} active />
-                                        <RegionMarker city="Falkenstein" latency={`${Math.round(lastLatency * 0.95)}ms`} active />
-                                    </div>
+                    <div className="relative group">
+                        <div className="bg-zinc-50 rounded-3xl aspect-video flex items-center justify-center overflow-hidden border border-black/5">
+                            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#000_1px,transparent_1px)] bg-size:20px_20px"></div>
+                            <div className="space-y-4 text-center z-10">
+                                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Global Distribution Map</p>
+                                <div className="flex gap-4">
+                                    <RegionMarker city="Nuremberg" latency={`${lastLatency}ms`} active />
+                                    <RegionMarker city="Frankfurt" latency={`${Math.round(lastLatency * 1.05)}ms`} active />
+                                    <RegionMarker city="Falkenstein" latency={`${Math.round(lastLatency * 0.95)}ms`} active />
                                 </div>
                             </div>
                         </div>
                     </div>
-                )}
+                </div>
             </div>
-
-            {/* SSH Pulse Log Simulation */}
-            {monitor.category === 'SSH' && (
-                <div className="bg-black rounded-[2.5rem] p-10 shadow-2xl border border-white/5 space-y-6">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                            <CommandLineIcon className="w-5 h-5 text-zinc-500" />
-                            <h3 className="text-lg font-medium text-white uppercase tracking-tight">Active Pulse Log</h3>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-none">Stream Active</span>
-                        </div>
-                    </div>
-                    <div className="bg-zinc-900/50 rounded-3xl p-8 font-mono text-[11px] space-y-2 overflow-hidden h-[200px] border border-white/5 relative">
-                        <div className="absolute inset-0 bg-linear-to-b from-transparent to-zinc-900/80 pointer-events-none z-10"></div>
-                        <p className="text-zinc-500">[{new Date().toLocaleTimeString()}] Establishing secure handshake... COMPLETED</p>
-                        <p className="text-zinc-500">[{new Date().toLocaleTimeString()}] Authenticating via PKI Identifiers... VERIFIED</p>
-                        <p className="text-zinc-500">[{new Date().toLocaleTimeString()}] Synchronizing system telemetry pulse...</p>
-                        <p className="text-green-500/80">[{new Date().toLocaleTimeString()}] Telemetry Received: CPU {monitor.last_record?.cpu_usage || 0}% | RAM {monitor.last_record?.ram_usage || 0}%</p>
-                        <p className="text-zinc-600 italic">[{new Date().toLocaleTimeString()}] Awaiting next scheduled beat interval...</p>
-                        <p className="text-zinc-500 underline decoration-zinc-800 underline-offset-4">Core Integrity Check: OPTIMUM</p>
-                    </div>
-                </div>
-            )}
 
 
             {/* Incidents List Area */}
