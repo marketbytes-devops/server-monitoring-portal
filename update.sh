@@ -17,7 +17,8 @@ fi
 
 # 2. Rebuild and start containers
 echo "Rebuilding pulse perimeter containers..."
-# Use --build to ensure code changes and requirements.txt updates are picked up
+# Use down first to avoid 'ContainerConfig' errors in older docker-compose versions
+docker-compose down
 docker-compose up -d --build
 
 # 3. Cleanup unused images to save disk space on VPS
