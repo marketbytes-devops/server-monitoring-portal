@@ -6,12 +6,6 @@ class StatusPageSerializer(serializers.ModelSerializer):
         model = StatusPage
         fields = '__all__'
 
-class StatusPageDetailSerializer(serializers.ModelSerializer):
-    monitors_data = MonitoredURLSerializer(source='monitors', many=True, read_only=True)
-    class Meta:
-        model = StatusPage
-        fields = '__all__'
-
 class MaintenanceWindowSerializer(serializers.ModelSerializer):
     monitor_name = serializers.ReadOnlyField(source='monitor.name')
     class Meta:
@@ -121,3 +115,9 @@ class MonitoredURLSerializer(serializers.ModelSerializer):
             'min': round((stats['min'] or 0) * 1000, 1),
             'max': round((stats['max'] or 0) * 1000, 1)
         }
+
+class StatusPageDetailSerializer(serializers.ModelSerializer):
+    monitors_data = MonitoredURLSerializer(source='monitors', many=True, read_only=True)
+    class Meta:
+        model = StatusPage
+        fields = '__all__'

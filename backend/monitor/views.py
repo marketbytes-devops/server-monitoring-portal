@@ -18,7 +18,7 @@ class StatusPageViewSet(viewsets.ModelViewSet):
     serializer_class = StatusPageSerializer
     permission_classes = [permissions.IsAuthenticated, HasOperationPermission]
 
-    @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny], url_path='by-slug/(?P<slug>[-\w]+)')
+    @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny], url_path=r'by-slug/(?P<slug>[-\w]+)')
     def by_slug(self, request, slug=None):
         try:
             instance = StatusPage.objects.get(slug=slug, is_public=True)
