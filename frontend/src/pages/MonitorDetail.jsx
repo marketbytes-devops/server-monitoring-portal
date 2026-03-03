@@ -62,7 +62,6 @@ const MonitorDetail = () => {
     const isUp = monitor.last_record?.is_up;
     const lastLatency = monitor.last_record?.response_time ? Math.round(monitor.last_record.response_time * 1000) : 0;
     const sslDays = monitor.ssl_expiry ? Math.ceil((new Date(monitor.ssl_expiry) - new Date()) / (1000 * 60 * 60 * 24)) : null;
-    const domainDays = monitor.domain_expiry ? Math.ceil((new Date(monitor.domain_expiry) - new Date()) / (1000 * 60 * 60 * 24)) : null;
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">

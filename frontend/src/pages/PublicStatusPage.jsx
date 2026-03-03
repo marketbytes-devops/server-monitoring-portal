@@ -117,9 +117,18 @@ const PublicStatusPage = () => {
                         {monitors.map(mon => (
                             <div key={mon.id} className="p-8 flex flex-col md:flex-row md:items-center justify-between hover:bg-zinc-50/50 transition-all group">
                                 <div className="flex items-center space-x-6 mb-6 md:mb-0">
-                                    <div className={`w-2 h-2 rounded-full ${mon.last_record?.is_up ? 'bg-black' : 'bg-red-500'} shadow-lg`}></div>
+                                    <div className={`w-2 h-2 rounded-full ${mon.last_record?.is_maintenance ? 'bg-amber-400' :
+                                            mon.last_record?.is_up ? 'bg-black' : 'bg-red-500'
+                                        } shadow-lg`}></div>
                                     <div>
-                                        <h4 className="text-base font-bold text-black tracking-tight">{mon.name}</h4>
+                                        <div className="flex items-center space-x-3">
+                                            <h4 className="text-base font-bold text-black tracking-tight">{mon.name}</h4>
+                                            {mon.last_record?.is_maintenance && (
+                                                <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[7px] font-bold rounded uppercase tracking-widest border border-amber-100">
+                                                    Maintenance
+                                                </span>
+                                            )}
+                                        </div>
                                         <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-0.5">{mon.url}</p>
                                     </div>
                                 </div>

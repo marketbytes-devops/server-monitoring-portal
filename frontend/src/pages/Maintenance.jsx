@@ -5,25 +5,41 @@ import {
     CalendarIcon,
     ClockIcon,
     ChevronRightIcon,
-    ExclamationCircleIcon
+    ExclamationCircleIcon,
+    TrashIcon,
+    ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { useToast } from '../components/Toast';
 import { getAuth } from '../services/auth';
-import { getMaintenanceWindows } from '../services/api';
+import { getMaintenanceWindows, createMaintenanceWindow, deleteMaintenanceWindow, getMonitors } from '../services/api';
 
 const Maintenance = () => {
     const { addToast } = useToast();
     const [auth, setAuth] = useState(getAuth());
     const [windows, setWindows] = useState([]);
+    const [monitors, setMonitors] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showAdd, setShowAdd] = useState(false);
+    const [formData, setFormData] = useState({
+        monitor: '',
+        title: '',
+        description: '',
+        start_time: '',
+        end_time: '',
+        is_active: true
+    });
 
     const fetchData = async () => {
         try {
-            const res = await getMaintenanceWindows();
-            setWindows(res.data);
+            const [windowsRes, monitorsRes] = await Promise.all([
+                getMaintenanceWindows(),
+                getMonitors()
+            ]);
+            setWindows(windowsRes.data);
+            setMonitors(monitorsRes.data);
         } catch (error) {
             console.error(error);
-            addToast("Failed to fetch maintenance windows", "error");
+            addToast("Failed to fetch maintenance data", "error");
         } finally {
             setLoading(false);
         }
@@ -33,6 +49,39 @@ const Maintenance = () => {
         setAuth(getAuth());
         fetchData();
     }, []);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await createMaintenanceWindow(formData);
+            addToast("Maintenance window scheduled successfully.", "success");
+            setShowAdd(false);
+            setFormData({
+                monitor: '',
+                title: '',
+                description: '',
+                start_time: '',
+                end_time: '',
+                is_active: true
+            });
+            fetchData();
+        } catch (error) {
+            console.error(error);
+            addToast("Failed to schedule maintenance window.", "error");
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm("Permanently cancel this maintenance window?")) return;
+        try {
+            await deleteMaintenanceWindow(id);
+            setWindows(windows.filter(w => w.id !== id));
+            addToast("Maintenance window removed.", "info");
+        } catch (error) {
+            console.error(error);
+            addToast("Failed to remove window.", "error");
+        }
+    };
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700 pb-20">
@@ -45,19 +94,23 @@ const Maintenance = () => {
                 </div>
                 {auth.permissions.can_create && (
                     <button
-                        onClick={() => addToast("Maintenance window scheduling initialized.", "info")}
+                        onClick={() => setShowAdd(!showAdd)}
                         className="flex items-center space-x-3 bg-black text-white px-8 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-black/10 hover:bg-zinc-800 active:scale-95 transition-all"
                     >
                         <PlusIcon className="w-5 h-5" />
-                        <span>Plan Window</span>
+                        <span>{showAdd ? 'Cancel Plan' : 'Plan Window'}</span>
                     </button>
                 )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Main Content Area */}
-                <div className="lg:col-span-2 space-y-6">
-                    {windows.length === 0 ? (
+                <div className={`${showAdd ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-6`}>
+                    {loading ? (
+                        <div className="flex items-center justify-center min-h-[500px]">
+                            <ArrowPathIcon className="w-10 h-10 text-zinc-200 animate-spin" />
+                        </div>
+                    ) : windows.length === 0 ? (
                         <div className="bg-white rounded-[2.5rem] p-24 shadow-2xl shadow-black/2 border border-black/5 flex flex-col items-center justify-center text-center space-y-8 min-h-[500px]">
                             <div className="w-24 h-24 bg-zinc-50 rounded-4xl flex items-center justify-center border border-black/5 mb-2">
                                 <WrenchScrewdriverIcon className="w-10 h-10 text-zinc-200" />
@@ -71,49 +124,151 @@ const Maintenance = () => {
                         </div>
                     ) : (
                         windows.map(window => (
-                            <div key={window.id} className="bg-white rounded-4xl p-8 shadow-2xl shadow-black/2 border border-black/5 flex items-center justify-between group cursor-pointer hover:border-black/10 transition-all">
+                            <div key={window.id} className="bg-white rounded-4xl p-8 shadow-2xl shadow-black/2 border border-black/5 flex items-center justify-between group hover:border-black/10 transition-all">
                                 <div className="flex items-center space-x-6">
                                     <div className="w-12 h-12 bg-zinc-50 rounded-2xl flex items-center justify-center border border-black/5">
                                         <CalendarIcon className="w-6 h-6 text-black" />
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-medium text-black uppercase tracking-tight">{window.title}</h3>
-                                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{window.date} // {window.duration}</p>
+                                        <div className="flex items-center space-x-3 mt-1">
+                                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">
+                                                {window.monitor_name} // {new Date(window.start_time).toLocaleString()}
+                                            </p>
+                                            <span className="text-xs text-zinc-300">→</span>
+                                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none">
+                                                {new Date(window.end_time).toLocaleString()}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex items-center space-x-6">
-                                    <span className="px-3 py-1 bg-zinc-100 text-zinc-500 text-[8px] font-bold rounded-lg uppercase tracking-widest">Upcoming</span>
-                                    <ChevronRightIcon className="w-5 h-5 text-zinc-200 group-hover:text-black group-hover:translate-x-1 transition-all" />
+                                    <span className={`px-3 py-1 text-[8px] font-bold rounded-lg uppercase tracking-widest ${new Date(window.end_time) < new Date() ? 'bg-zinc-100 text-zinc-400' : 'bg-black text-white'}`}>
+                                        {new Date(window.end_time) < new Date() ? 'Completed' : 'Upcoming'}
+                                    </span>
+                                    {auth.permissions.can_delete && (
+                                        <button
+                                            onClick={() => handleDelete(window.id)}
+                                            className="p-3 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                                        >
+                                            <TrashIcon className="w-4 h-4" />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))
                     )}
                 </div>
 
-                {/* Sidebar Info */}
-                <div className="space-y-6">
-                    <div className="bg-zinc-50 rounded-[2.5rem] p-10 border border-black/5 space-y-8">
-                        <div>
-                            <h3 className="text-xl font-medium text-black uppercase tracking-tight mb-2">Operational</h3>
-                            <p className="text-[10px] text-zinc-400 font-normal uppercase tracking-[0.2em]">Strategy & Planning</p>
-                        </div>
+                {/* Create Form Section */}
+                {showAdd && (
+                    <div className="animate-in slide-in-from-right-8 duration-700">
+                        <div className="bg-black rounded-[2.5rem] p-10 shadow-2xl border border-white/5 space-y-8 sticky top-8">
+                            <div>
+                                <h3 className="text-2xl font-medium text-white uppercase tracking-tight">Schedule Window</h3>
+                                <p className="text-[10px] text-zinc-500 font-normal uppercase tracking-[0.2em] mt-1">Operational Pulse Pause</p>
+                            </div>
 
-                        <div className="space-y-6">
-                            <SidebarItem icon={<ClockIcon className="w-5 h-5" />} title="Alert Suppression" desc="Silence notifications during maintenance." />
-                            <SidebarItem icon={<ExclamationCircleIcon className="w-5 h-5" />} title="Uptime Padding" desc="Prevent maintenance from affecting statistics." />
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest px-1">Window Title</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={formData.title}
+                                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm text-white focus:bg-white focus:text-black outline-none transition-all"
+                                        placeholder="e.g. Database Migration"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest px-1">Target Pulse Node</label>
+                                    <select
+                                        required
+                                        value={formData.monitor}
+                                        onChange={(e) => setFormData({ ...formData, monitor: e.target.value })}
+                                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm text-white focus:bg-white focus:text-black outline-none transition-all appearance-none"
+                                    >
+                                        <option value="" className="bg-zinc-900">Select Node</option>
+                                        {monitors.map(mon => (
+                                            <option key={mon.id} value={mon.id} className="bg-zinc-900">{mon.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest px-1">Start Time</label>
+                                        <input
+                                            type="datetime-local"
+                                            required
+                                            value={formData.start_time}
+                                            onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-[10px] text-white focus:bg-white focus:text-black outline-none transition-all"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest px-1">End Time</label>
+                                        <input
+                                            type="datetime-local"
+                                            required
+                                            value={formData.end_time}
+                                            onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-[10px] text-white focus:bg-white focus:text-black outline-none transition-all"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest px-1">Internal Description</label>
+                                    <textarea
+                                        value={formData.description}
+                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm text-white focus:bg-white focus:text-black outline-none transition-all h-24 scrollbar-hide"
+                                        placeholder="Reason for operational pause..."
+                                    />
+                                </div>
+
+                                <div className="pt-4">
+                                    <button
+                                        type="submit"
+                                        className="w-full bg-white text-black py-4 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-white/5"
+                                    >
+                                        Activate Window
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
+                )}
 
-                    <div className="bg-black rounded-[2.5rem] p-10 shadow-2xl border border-white/5">
-                        <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-[0.3em] mb-4 text-center">System Integrity</p>
-                        <h4 className="text-xl font-medium text-white uppercase text-center tracking-tight">Zero Delta<br />Environment</h4>
-                        <div className="mt-8 flex justify-center">
-                            <div className="w-16 h-16 rounded-full border-4 border-white/10 flex items-center justify-center">
-                                <div className="w-8 h-8 rounded-full bg-white animate-pulse"></div>
+                {/* Sidebar Info */}
+                {!showAdd && (
+                    <div className="space-y-6">
+                        <div className="bg-zinc-50 rounded-[2.5rem] p-10 border border-black/5 space-y-8">
+                            <div>
+                                <h3 className="text-xl font-medium text-black uppercase tracking-tight mb-2">Operational</h3>
+                                <p className="text-[10px] text-zinc-400 font-normal uppercase tracking-[0.2em]">Strategy & Planning</p>
+                            </div>
+
+                            <div className="space-y-6">
+                                <SidebarItem icon={<ClockIcon className="w-5 h-5" />} title="Alert Suppression" desc="Silence notifications during maintenance." />
+                                <SidebarItem icon={<ExclamationCircleIcon className="w-5 h-5" />} title="Uptime Padding" desc="Prevent maintenance from affecting statistics." />
+                            </div>
+                        </div>
+
+                        <div className="bg-black rounded-[2.5rem] p-10 shadow-2xl border border-white/5">
+                            <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-[0.3em] mb-4 text-center">System Integrity</p>
+                            <h4 className="text-xl font-medium text-white uppercase text-center tracking-tight">Zero Delta<br />Environment</h4>
+                            <div className="mt-8 flex justify-center">
+                                <div className="w-16 h-16 rounded-full border-4 border-white/10 flex items-center justify-center">
+                                    <div className="w-8 h-8 rounded-full bg-white animate-pulse"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );
@@ -126,9 +281,10 @@ const SidebarItem = ({ icon, title, desc }) => (
         </div>
         <div>
             <h4 className="text-[11px] font-bold text-black uppercase tracking-widest">{title}</h4>
-            <p className="text-[10px] text-zinc-400 mt-1 leading-relaxed">{desc}</p>
+            <p className="text-[10px] text-zinc-400 mt-1 leading-relaxed lowercase">{desc}</p>
         </div>
     </div>
 );
 
 export default Maintenance;
+

@@ -71,7 +71,7 @@ class MonitoredURLSerializer(serializers.ModelSerializer):
         import datetime
         now = timezone.now()
         start_date = now - datetime.timedelta(days=days)
-        records = obj.records.filter(checked_at__gte=start_date)
+        records = obj.records.filter(checked_at__gte=start_date, is_maintenance=False)
         total = records.count()
         if total == 0: return 100.0 if obj.is_active else 0.0
         up_count = records.filter(is_up=True).count()

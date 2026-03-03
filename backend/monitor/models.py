@@ -84,6 +84,7 @@ class UptimeRecord(models.Model):
     is_up = models.BooleanField(null=True, blank=True)
     checked_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     error_message = models.TextField(blank=True, null=True)
+    is_maintenance = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.url.name} - {self.checked_at} - {'UP' if self.is_up else 'DOWN'}"

@@ -229,17 +229,50 @@ const CreateMonitor = () => {
                     </div>
 
                     <div className="bg-black rounded-[2.5rem] p-10 shadow-2xl border border-white/5 space-y-8">
-                        <div className="flex items-center space-x-4 mb-2">
-                            <div className="p-3 bg-white/10 rounded-xl border border-white/10">
-                                <BellAlertIcon className="w-5 h-5 text-white" />
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-4">
+                                <div className="p-3 bg-white/10 rounded-xl border border-white/10">
+                                    <BellAlertIcon className="w-5 h-5 text-white" />
+                                </div>
+                                <h3 className="text-lg font-medium text-white uppercase tracking-tight">Notification</h3>
                             </div>
-                            <h3 className="text-lg font-medium text-white uppercase tracking-tight">Notification</h3>
+                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">{contacts.length} Endpoints</span>
                         </div>
 
-                        <div className="space-y-5">
-                            <ToggleDark label="Notify via Email" name="notify_email" checked={formData.notify_email} onChange={handleChange} />
+                        <div className="space-y-6">
+                            <ToggleDark label="Notify via global Email" name="notify_email" checked={formData.notify_email} onChange={handleChange} />
+
+                            <div className="space-y-3 pt-2">
+                                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">Specific Alert Enpoints</label>
+                                <div className="max-h-40 overflow-y-auto space-y-2 pr-2 no-scrollbar">
+                                    {contacts.length === 0 ? (
+                                        <p className="text-[10px] text-zinc-600 uppercase font-bold italic py-2">No synchronized contacts found.</p>
+                                    ) : (
+                                        contacts.map(contact => (
+                                            <label key={contact.id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 cursor-pointer transition-all group">
+                                                <div className="flex items-center space-x-3">
+                                                    <div className="w-2 h-2 rounded-full bg-zinc-700 group-hover:bg-white transition-colors"></div>
+                                                    <span className="text-xs text-zinc-400 group-hover:text-white font-medium">{contact.name}</span>
+                                                </div>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.alert_contacts.includes(contact.id)}
+                                                    onChange={(e) => {
+                                                        const newContacts = e.target.checked
+                                                            ? [...formData.alert_contacts, contact.id]
+                                                            : formData.alert_contacts.filter(id => id !== contact.id);
+                                                        setFormData({ ...formData, alert_contacts: newContacts });
+                                                    }}
+                                                    className="w-5 h-5 rounded-lg border-white/10 bg-transparent text-white focus:ring-0 checked:bg-white checked:border-white transition-all"
+                                                />
+                                            </label>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="h-px bg-white/10 my-2"></div>
-                            <ToggleDark label="Visible on Status Page" name="visible_on_status_page" checked={formData.visible_on_status_page} onChange={handleChange} />
+                            <ToggleDark label="Visible on Public Status Page" name="visible_on_status_page" checked={formData.visible_on_status_page} onChange={handleChange} />
                         </div>
                     </div>
                 </div>

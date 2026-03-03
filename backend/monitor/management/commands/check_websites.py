@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from monitor.models import MonitoredURL, UptimeRecord, Incident, ActivityLog
+from monitor.models import MonitoredURL, UptimeRecord, Incident, ActivityLog, MaintenanceWindow
 import requests
 import time
 import socket
@@ -46,7 +46,16 @@ class Command(BaseCommand):
                 end_time = time.time()
                 duration = end_time - start_time
                 
-                self.stdout.write(f"  Result: {'UP' if is_up else 'DOWN'} | Latency: {duration:.3f}s | Error: {error_message}")
+                # Check for active maintenance window
+                now = timezone.now()
+                is_maintenance = MaintenanceWindow.objects.filter(
+                    monitor=url_obj,
+                    is_active=True,
+                    start_time__lte=now,
+                    end_time__gte=now
+                ).exists()
+
+                self.stdout.write(f"  Result: {'UP' if is_up else 'DOWN'} | Latency: {duration:.3f}s | Maintenance: {is_maintenance}")
 
                 if url_obj.check_ssl and url_obj.url and url_obj.url.lower().startswith('https'):
                     self.perform_ssl_check(url_obj)
@@ -56,14 +65,28 @@ class Command(BaseCommand):
                     status_code=status_code,
                     response_time=duration,
                     is_up=is_up,
-                    error_message=error_message
+                    error_message=error_message,
+                    is_maintenance=is_maintenance
                 )
                 
-                self.manage_incident(url_obj, is_up, error_message or f"Status Code: {status_code}")
+                if not is_maintenance:
+                    self.manage_incident(url_obj, is_up, error_message or f"Status Code: {status_code}")
+                else:
+                    self.stdout.write(f"  Alert suppression active for {url_obj.name} (Maintenance)")
 
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f"  Critical check error: {str(e)}"))
-                self.manage_incident(url_obj, False, str(e))
+                
+                # Check for maintenance even in case of critical error
+                is_maintenance = MaintenanceWindow.objects.filter(
+                    monitor=url_obj,
+                    is_active=True,
+                    start_time__lte=timezone.now(),
+                    end_time__gte=timezone.now()
+                ).exists()
+
+                if not is_maintenance:
+                    self.manage_incident(url_obj, False, str(e))
         
         self.stdout.write(self.style.SUCCESS(f'Synchronized Pulse perimeter successfully at {timezone.now()}'))
 
@@ -198,10 +221,34 @@ class Command(BaseCommand):
         except: pass
 
     def send_alert(self, url_obj, error_msg):
-        if not url_obj.notify_email: return
         subject = f"CRITICAL: {url_obj.name} Pulse Failure"
         message = f"Monitor: {url_obj.name}\nURL: {url_obj.url}\nRoot Cause: {error_msg}\nTime: {timezone.now()}"
-        if settings.EMAIL_HOST_USER:
+        
+        # 1. Global Admin Email
+        if url_obj.notify_email and settings.EMAIL_HOST_USER:
              try:
                 send_mail(subject, message, settings.EMAIL_HOST_USER, [settings.EMAIL_HOST_USER], fail_silently=True)
              except: pass
+
+        # 2. Specific Alert Contacts
+        for contact in url_obj.alert_contacts.all():
+            try:
+                if contact.contact_type == 'EMAIL':
+                    send_mail(subject, message, settings.EMAIL_HOST_USER, [contact.value], fail_silently=True)
+                
+                elif contact.contact_type == 'SLACK':
+                    requests.post(contact.value, json={"text": f"🚨 *{subject}*\n{message}"}, timeout=5)
+                
+                elif contact.contact_type == 'DISCORD':
+                    requests.post(contact.value, json={"content": f"🚨 **{subject}**\n{message}"}, timeout=5)
+                
+                elif contact.contact_type == 'WEBHOOK':
+                    requests.post(contact.value, json={
+                        "event": "monitor_down",
+                        "monitor_name": url_obj.name,
+                        "url": url_obj.url,
+                        "error": error_msg,
+                        "timestamp": str(timezone.now())
+                    }, timeout=5)
+            except Exception as e:
+                self.stdout.write(self.style.WARNING(f"Failed to send alert to {contact.name}: {str(e)}"))
