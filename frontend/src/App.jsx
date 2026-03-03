@@ -14,6 +14,7 @@ import Maintenance from './pages/Maintenance';
 import Team from './pages/Team';
 import Roles from './pages/Roles';
 import Profile from './pages/Profile';
+import PublicStatusPage from './pages/PublicStatusPage';
 import AdminLayout from './layout/AdminLayout';
 import PrivateRoute from './components/PrivateRoute';
 
@@ -45,6 +46,7 @@ function App() {
             </Route>
           </Route>
 
+          <Route path="/status/:slug" element={<PublicStatusPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>

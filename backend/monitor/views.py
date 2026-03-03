@@ -6,14 +6,26 @@ from .serializers import (
     IncidentSerializer, 
     ActivityLogSerializer,
     StatusPageSerializer,
+    StatusPageDetailSerializer,
     MaintenanceWindowSerializer
 )
 from core.permissions import HasOperationPermission
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 class StatusPageViewSet(viewsets.ModelViewSet):
     queryset = StatusPage.objects.all()
     serializer_class = StatusPageSerializer
     permission_classes = [permissions.IsAuthenticated, HasOperationPermission]
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny], url_path='by-slug/(?P<slug>[-\w]+)')
+    def by_slug(self, request, slug=None):
+        try:
+            instance = StatusPage.objects.get(slug=slug, is_public=True)
+            serializer = StatusPageDetailSerializer(instance)
+            return Response(serializer.data)
+        except StatusPage.DoesNotExist:
+            return Response({"detail": "Not found."}, status=404)
 
 class MaintenanceWindowViewSet(viewsets.ModelViewSet):
     queryset = MaintenanceWindow.objects.all()

@@ -10,11 +10,6 @@ from django.core.mail import send_mail
 from django.conf import settings
 import datetime
 import random
-import io
-try:
-    import paramiko
-except ImportError:
-    paramiko = None
 
 class Command(BaseCommand):
     help = 'Checks the status of monitored URLs and manages Incidents with regional analysis'
@@ -56,24 +51,12 @@ class Command(BaseCommand):
                 if url_obj.check_ssl and url_obj.url and url_obj.url.lower().startswith('https'):
                     self.perform_ssl_check(url_obj)
 
-                metrics = None
-                if url_obj.category == 'SSH' and is_up:
-                    success, ssh_metrics, ssh_error = self.check_ssh(url_obj)
-                    if success:
-                        metrics = ssh_metrics
-                    else:
-                        error_message = ssh_error
-
                 UptimeRecord.objects.create(
                     url=url_obj,
                     status_code=status_code,
                     response_time=duration,
                     is_up=is_up,
-                    error_message=error_message,
-                    cpu_usage=metrics.get('cpu') if metrics else None,
-                    ram_usage=metrics.get('ram') if metrics else None,
-                    disk_usage=metrics.get('disk') if metrics else None,
-                    system_uptime=metrics.get('uptime') if metrics else None
+                    error_message=error_message
                 )
                 
                 self.manage_incident(url_obj, is_up, error_message or f"Status Code: {status_code}")
@@ -198,56 +181,6 @@ class Command(BaseCommand):
             return False, response.status_code, "HTTP Error"
         except Exception as e:
             return False, None, str(e)
-
-    def check_ssh(self, url_obj):
-        if not paramiko:
-            return False, None, "Paramiko library not installed"
-        
-        try:
-            client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            
-            host = self._get_host(url_obj.url)
-            port = url_obj.ssh_port or 22
-            username = url_obj.ssh_username or 'root'
-            
-            if url_obj.ssh_key:
-                key_file = io.StringIO(url_obj.ssh_key)
-                # Try multiple key types
-                try:
-                    pkey = paramiko.RSAKey.from_private_key(key_file)
-                except:
-                    try:
-                        key_file.seek(0)
-                        pkey = paramiko.Ed25519Key.from_private_key(key_file)
-                    except:
-                        client.close()
-                        return False, None, "Unsupported SSH Key type"
-                
-                client.connect(host, port=port, username=username, pkey=pkey, timeout=10)
-                
-                # Gather metrics
-                # Command: loadavg, RAM %, Disk %, CPU %, Uptime
-                cmd = "cat /proc/loadavg | awk '{print $1}'; free -m | awk 'NR==2{printf \"%.2f\", $3*100/$2 }'; df -h / | awk 'NR==2{print $5}' | sed 's/%//'; top -bn1 | grep 'Cpu(s)' | sed 's/.*, *\\([0-9.]*\\)%* id.*/\\1/' | awk '{print 100 - $1}'; uptime -p"
-                stdin, stdout, stderr = client.exec_command(cmd)
-                results = stdout.read().decode().splitlines()
-                client.close()
-                
-                if len(results) >= 5:
-                    metrics = {
-                        "load": float(results[0]) if results[0] else 0,
-                        "ram": float(results[1]) if results[1] else 0,
-                        "disk": float(results[2]) if results[2] else 0,
-                        "cpu": float(results[3]) if results[3] else 0,
-                        "uptime": results[4] if results[4] else "Unknown"
-                    }
-                    return True, metrics, None
-                return True, {}, "Incomplete metrics gathered"
-            else:
-                return False, None, "SSH Key missing for perimeter sync"
-            
-        except Exception as e:
-            return False, None, f"SSH sync failure: {str(e)}"
 
     def perform_ssl_check(self, url_obj):
         host = self._get_host(url_obj.url)

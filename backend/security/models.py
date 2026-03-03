@@ -2,7 +2,6 @@ from django.db import models
 
 class SecurityEvent(models.Model):
     EVENT_TYPES = (
-        ('SSH_FAIL', 'SSH Failed Login'),
         ('UFW_BLOCK', 'Firewall Block'),
         ('OTHER', 'Other'),
     )

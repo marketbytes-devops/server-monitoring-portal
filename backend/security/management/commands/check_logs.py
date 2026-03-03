@@ -30,31 +30,28 @@ class Command(BaseCommand):
                  self.parse_line(line)
 
     def parse_line(self, line):
-        # Example pattern for SSH failed password
-        # "Failed password for invalid user admin from 192.168.1.50 port 22 ssh2"
-        ssh_fail_pattern = r"Failed password for (?:invalid user )?(\w+) from (\d+\.\d+\.\d+\.\d+)"
+        # Example UFW block pattern
+        # "[UFW BLOCK] IN=eth0 OUT= SRC=185.209.0.12 DST=192.168.1.10..."
+        ufw_block_pattern = r"\[UFW BLOCK\].*SRC=(\d+\.\d+\.\d+\.\d+)"
         
-        match = re.search(ssh_fail_pattern, line)
+        match = re.search(ufw_block_pattern, line)
         if match:
-            user = match.group(1)
-            ip = match.group(2)
+            ip = match.group(1)
             
-            # Check if this event already recently recorded (simple de-dupe for demo)
-            # In production, use file pointer positions
             exists = SecurityEvent.objects.filter(
-                event_type='SSH_FAIL', 
+                event_type='UFW_BLOCK', 
                 ip_address=ip, 
                 raw_log__contains=line.strip()
             ).exists()
             
             if not exists:
                 SecurityEvent.objects.create(
-                    event_type='SSH_FAIL',
+                    event_type='UFW_BLOCK',
                     ip_address=ip,
                     raw_log=line.strip()
                 )
-                self.send_alert(f"SSH Failed Login: User {user} from {ip}")
-                self.stdout.write(self.style.ERROR(f"Security Alert: {user} from {ip}"))
+                self.send_alert(f"Firewall Block: IP {ip}")
+                self.stdout.write(self.style.ERROR(f"Security Alert: Blocked {ip}"))
 
     def send_alert(self, message):
          if settings.EMAIL_HOST_USER:

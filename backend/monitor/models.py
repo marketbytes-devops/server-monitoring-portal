@@ -19,16 +19,13 @@ class AlertContact(models.Model):
 class MonitoredURL(models.Model):
     CATEGORY_CHOICES = (
         ('SITES', 'Websites'),
-        ('SSH', 'SSH'),
     )
     MONITOR_TYPES = (
         ('HTTP', 'HTTP(s)'),
         ('KEYWORD', 'Keyword'),
         ('PING', 'Ping'),
         ('PORT', 'Port'),
-        ('CRON', 'Cron Job'),
         ('API', 'API Monitoring'),
-        ('SSH', 'SSH Monitoring'),
     )
     
     category = models.CharField(max_length=10, choices=CATEGORY_CHOICES, default='SITES')
@@ -53,29 +50,20 @@ class MonitoredURL(models.Model):
     expected_status_code = models.IntegerField(default=200, null=True, blank=True, help_text="Wait for specific status code")
     request_headers = models.TextField(blank=True, null=True, help_text="JSON format headers")
     
-    # SSH Settings
-    ssh_username = models.CharField(max_length=100, blank=True, null=True)
-    ssh_password = models.CharField(max_length=255, blank=True, null=True)
-    ssh_key = models.TextField(blank=True, null=True, help_text="Private Key for SSH")
-    
     interval = models.IntegerField(help_text="Check interval in minutes", default=5, null=True, blank=True)
     timeout = models.IntegerField(help_text="Timeout in seconds", default=30, null=True, blank=True)
     
     # Monitoring Options
-    dns_monitoring = models.BooleanField(default=False)
     check_ssl_errors = models.BooleanField(default=False)
     check_ssl_expiry = models.BooleanField(default=True)
-    check_domain_expiry = models.BooleanField(default=False)
     
     # Notification Settings
     notify_email = models.BooleanField(default=True)
-    notify_phone = models.BooleanField(default=False)
     
-    # SSL & Domain Info (Cached)
+    # SSL Info (Cached)
     check_ssl = models.BooleanField(default=False)
     ssl_expiry = models.DateTimeField(null=True, blank=True)
     ssl_issuer = models.CharField(max_length=255, null=True, blank=True)
-    domain_expiry = models.DateTimeField(null=True, blank=True)
     
     # Relations
     alert_contacts = models.ManyToManyField(AlertContact, blank=True)
@@ -96,12 +84,6 @@ class UptimeRecord(models.Model):
     is_up = models.BooleanField(null=True, blank=True)
     checked_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     error_message = models.TextField(blank=True, null=True)
-    
-    # Server Metrics (SSH)
-    cpu_usage = models.FloatField(null=True, blank=True)
-    ram_usage = models.FloatField(null=True, blank=True)
-    disk_usage = models.FloatField(null=True, blank=True)
-    system_uptime = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
         return f"{self.url.name} - {self.checked_at} - {'UP' if self.is_up else 'DOWN'}"

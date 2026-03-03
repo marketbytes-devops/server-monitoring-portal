@@ -128,7 +128,7 @@ const MonitorsList = () => {
                                         </td>
                                         <td className="px-10 py-6">
                                             <div className="flex items-center space-x-2">
-                                                {mon.category === 'SSH' ? <CommandLineIcon className="w-4 h-4 text-zinc-400" /> : <GlobeAltIcon className="w-4 h-4 text-zinc-400" />}
+                                                <GlobeAltIcon className="w-4 h-4 text-zinc-400" />
                                                 <span className="px-2 py-0.5 bg-zinc-100 text-zinc-600 text-[8px] font-bold rounded-md uppercase tracking-wider">
                                                     {mon.monitor_type}
                                                 </span>

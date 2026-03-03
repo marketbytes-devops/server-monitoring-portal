@@ -4,11 +4,9 @@ import { createMonitor, updateMonitor, getMonitor, getAlertContacts } from '../s
 import { useToast } from '../components/Toast';
 import {
     GlobeAltIcon,
-    CommandLineIcon,
     ChevronLeftIcon,
     ShieldCheckIcon,
     BellAlertIcon,
-    KeyIcon,
     ClockIcon
 } from '@heroicons/react/24/outline';
 import CustomSelect from '../components/CustomSelect';
@@ -18,7 +16,6 @@ const CreateMonitor = () => {
     const { id } = useParams();
     const isEdit = Boolean(id);
     const { addToast } = useToast();
-    const [activeTab, setActiveTab] = useState('SITES');
     const [loading, setLoading] = useState(false);
 
     // Form states
@@ -28,19 +25,13 @@ const CreateMonitor = () => {
         name: '',
         url: '',
         interval: 5,
-        dns_monitoring: false,
         check_ssl_errors: false,
         check_ssl_expiry: true,
-        check_domain_expiry: false,
         check_http_status: true,
         notify_email: true,
-        notify_phone: false,
         visible_on_status_page: true,
         alert_contacts: [],
-        team_assignment: 'Superadmin',
-        ssh_username: 'root',
-        ssh_key: '',
-        ssh_password: ''
+        team_assignment: 'Superadmin'
     });
 
     const [contacts, setContacts] = useState([]);
@@ -76,7 +67,7 @@ const CreateMonitor = () => {
                         visible_on_status_page: data.visible_on_status_page,
                         alert_contacts: data.alert_contacts || []
                     });
-                    setActiveTab(data.category);
+
                 } catch (error) {
                     addToast("Failed to fetch node data", "error");
                 }
@@ -95,10 +86,7 @@ const CreateMonitor = () => {
         }));
     };
 
-    const handleTabChange = (tab) => {
-        setActiveTab(tab);
-        setFormData(prev => ({ ...prev, category: tab, monitor_type: tab === 'SITES' ? 'HTTP' : 'SSH' }));
-    };
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -139,160 +127,89 @@ const CreateMonitor = () => {
                 </div>
             </div>
 
-            {/* Tab Navigation */}
-            <div className="flex p-1 bg-zinc-100/50 rounded-2xl w-fit">
-                <button
-                    onClick={() => handleTabChange('SITES')}
-                    className={`flex items-center space-x-2 px-8 py-3 rounded-xl text-[10px] font-bold uppercase tracking-[0.15em] transition-all duration-500 ${activeTab === 'SITES' ? 'bg-black text-white shadow-xl' : 'text-zinc-400 hover:text-black'}`}
-                >
-                    <GlobeAltIcon className="w-4 h-4" />
-                    <span>Sites Monitoring</span>
-                </button>
-                <button
-                    onClick={() => handleTabChange('SSH')}
-                    className={`flex items-center space-x-2 px-8 py-3 rounded-xl text-[10px] font-bold uppercase tracking-[0.15em] transition-all duration-500 ${activeTab === 'SSH' ? 'bg-black text-white shadow-xl' : 'text-zinc-400 hover:text-black'}`}
-                >
-                    <CommandLineIcon className="w-4 h-4" />
-                    <span>SSH Perimeter</span>
-                </button>
-            </div>
+
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                {activeTab === 'SITES' ? (
-                    /* SITES CONFIGURATION */
-                    <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/2 border border-black/5 space-y-10">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <h2 className="text-2xl font-medium text-black uppercase tracking-tight">Configuration</h2>
-                                <p className="text-[10px] text-zinc-500 font-normal uppercase tracking-[0.2em] mt-1">Secondary Endpoint Mapping</p>
-                            </div>
-                            <div className="p-4 bg-zinc-50 rounded-2xl border border-black/5">
-                                <GlobeAltIcon className="w-6 h-6 text-black" />
-                            </div>
+                {/* SITES CONFIGURATION */}
+                <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/2 border border-black/5 space-y-10">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <h2 className="text-2xl font-medium text-black uppercase tracking-tight">Configuration</h2>
+                            <p className="text-[10px] text-zinc-500 font-normal uppercase tracking-[0.2em] mt-1">Secondary Endpoint Mapping</p>
                         </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <CustomSelect
-                                label="Monitor Class"
-                                name="monitor_type"
-                                value={formData.monitor_type}
-                                onChange={handleChange}
-                                options={[
-                                    { value: 'HTTP', label: 'HTTP(s)' },
-                                    { value: 'KEYWORD', label: 'Keyword Match' },
-                                    { value: 'PING', label: 'Ping' },
-                                    { value: 'PORT', label: 'Port' },
-                                    { value: 'CRON', label: 'Cron Job' },
-                                    { value: 'API', label: 'API Monitoring' }
-                                ]}
-                            />
-
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">Project / Website Name</label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    required
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    placeholder="e.g. SakiVisa Portal"
-                                    className="w-full bg-zinc-50 border border-black/5 rounded-2xl px-6 py-4 text-sm font-medium focus:ring-2 focus:ring-black outline-none transition-all"
-                                />
-                            </div>
-
-                            <div className="space-y-3 md:col-span-2">
-                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">URL / IP Address</label>
-                                <input
-                                    type="text"
-                                    name="url"
-                                    required
-                                    value={formData.url}
-                                    onChange={handleChange}
-                                    placeholder="https://sakivisa.com or 104.21.75.11"
-                                    className="w-full bg-zinc-50 border border-black/5 rounded-2xl px-6 py-4 text-sm font-medium focus:ring-2 focus:ring-black outline-none transition-all"
-                                />
-                            </div>
-
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">Beat Interval (min)</label>
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        name="interval"
-                                        min="1"
-                                        value={formData.interval}
-                                        onChange={handleChange}
-                                        className="w-full bg-zinc-50 border border-black/5 rounded-2xl px-6 py-4 text-sm font-medium focus:ring-2 focus:ring-black outline-none transition-all"
-                                    />
-                                    <ClockIcon className="w-5 h-5 absolute right-6 top-1/2 -translate-y-1/2 text-zinc-300" />
-                                </div>
-                            </div>
-
-                            <CustomSelect
-                                label="Team Assignment"
-                                name="team_assignment"
-                                value={formData.team_assignment}
-                                options={[
-                                    { value: 'Superadmin', label: 'Superadmin' },
-                                    { value: 'User', label: 'User' }
-                                ]}
-                                onChange={handleChange}
-                            />
+                        <div className="p-4 bg-zinc-50 rounded-2xl border border-black/5">
+                            <GlobeAltIcon className="w-6 h-6 text-black" />
                         </div>
                     </div>
-                ) : (
-                    /* SSH CONFIGURATION */
-                    <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/2 border border-black/5 space-y-10">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <h2 className="text-2xl font-medium text-black uppercase tracking-tight">SSH Perimeter</h2>
-                                <p className="text-[10px] text-zinc-500 font-normal uppercase tracking-[0.2em] mt-1">Encrypted Node Access</p>
-                            </div>
-                            <div className="p-4 bg-zinc-50 rounded-2xl border border-black/5">
-                                <CommandLineIcon className="w-6 h-6 text-black" />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <CustomSelect
+                            label="Monitor Class"
+                            name="monitor_type"
+                            value={formData.monitor_type}
+                            onChange={handleChange}
+                            options={[
+                                { value: 'HTTP', label: 'HTTP(s)' },
+                                { value: 'KEYWORD', label: 'Keyword Match' },
+                                { value: 'PING', label: 'Ping' },
+                                { value: 'PORT', label: 'Port' },
+                                { value: 'API', label: 'API Monitoring' }
+                            ]}
+                        />
+
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">Project / Website Name</label>
+                            <input
+                                type="text"
+                                name="name"
+                                required
+                                value={formData.name}
+                                onChange={handleChange}
+                                placeholder="e.g. SakiVisa Portal"
+                                className="w-full bg-zinc-50 border border-black/5 rounded-2xl px-6 py-4 text-sm font-medium focus:ring-2 focus:ring-black outline-none transition-all"
+                            />
+                        </div>
+
+                        <div className="space-y-3 md:col-span-2">
+                            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">URL / IP Address</label>
+                            <input
+                                type="text"
+                                name="url"
+                                required
+                                value={formData.url}
+                                onChange={handleChange}
+                                placeholder="https://sakivisa.com or 104.21.75.11"
+                                className="w-full bg-zinc-50 border border-black/5 rounded-2xl px-6 py-4 text-sm font-medium focus:ring-2 focus:ring-black outline-none transition-all"
+                            />
+                        </div>
+
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">Beat Interval (min)</label>
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    name="interval"
+                                    min="1"
+                                    value={formData.interval}
+                                    onChange={handleChange}
+                                    className="w-full bg-zinc-50 border border-black/5 rounded-2xl px-6 py-4 text-sm font-medium focus:ring-2 focus:ring-black outline-none transition-all"
+                                />
+                                <ClockIcon className="w-5 h-5 absolute right-6 top-1/2 -translate-y-1/2 text-zinc-300" />
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">Host / IP Address</label>
-                                <input
-                                    type="text"
-                                    name="url"
-                                    required
-                                    value={formData.url}
-                                    onChange={handleChange}
-                                    placeholder="e.g. 157.90.156.63"
-                                    className="w-full bg-zinc-50 border border-black/5 rounded-2xl px-6 py-4 text-sm font-medium focus:ring-2 focus:ring-black outline-none transition-all"
-                                />
-                            </div>
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">SSH Username</label>
-                                <input
-                                    type="text"
-                                    name="ssh_username"
-                                    required
-                                    value={formData.ssh_username}
-                                    onChange={handleChange}
-                                    placeholder="e.g. root or ubuntu"
-                                    className="w-full bg-zinc-50 border border-black/5 rounded-2xl px-6 py-4 text-sm font-medium focus:ring-2 focus:ring-black outline-none transition-all"
-                                />
-                            </div>
-                            <div className="space-y-3 md:col-span-2">
-                                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">SSH Private Key (OpenSSH Format)</label>
-                                <textarea
-                                    name="ssh_key"
-                                    required
-                                    rows="6"
-                                    value={formData.ssh_key}
-                                    onChange={handleChange}
-                                    placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;..."
-                                    className="w-full bg-zinc-50 border border-black/5 rounded-2xl px-6 py-4 text-sm font-mono focus:ring-2 focus:ring-black outline-none transition-all resize-none"
-                                ></textarea>
-                            </div>
-                        </div>
+                        <CustomSelect
+                            label="Team Assignment"
+                            name="team_assignment"
+                            value={formData.team_assignment}
+                            options={[
+                                { value: 'Superadmin', label: 'Superadmin' },
+                                { value: 'User', label: 'User' }
+                            ]}
+                            onChange={handleChange}
+                        />
                     </div>
-                )}
+                </div>
 
                 {/* Shared Advanced Options */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -305,10 +222,8 @@ const CreateMonitor = () => {
                         </div>
 
                         <div className="space-y-5">
-                            <Toggle label="DNS Monitoring" name="dns_monitoring" checked={formData.dns_monitoring} onChange={handleChange} />
                             <Toggle label="Check SSL Errors" name="check_ssl_errors" checked={formData.check_ssl_errors} onChange={handleChange} />
                             <Toggle label="SSL Expiry Reminders" name="check_ssl_expiry" checked={formData.check_ssl_expiry} onChange={handleChange} />
-                            <Toggle label="Domain Expiry Reminders" name="check_domain_expiry" checked={formData.check_domain_expiry} onChange={handleChange} />
                             <Toggle label="Up HTTP Status Codes" name="check_http_status" checked={formData.check_http_status} onChange={handleChange} />
                         </div>
                     </div>
@@ -323,7 +238,6 @@ const CreateMonitor = () => {
 
                         <div className="space-y-5">
                             <ToggleDark label="Notify via Email" name="notify_email" checked={formData.notify_email} onChange={handleChange} />
-                            <ToggleDark label="Notify via Phone (SMS)" name="notify_phone" checked={formData.notify_phone} onChange={handleChange} />
                             <div className="h-px bg-white/10 my-2"></div>
                             <ToggleDark label="Visible on Status Page" name="visible_on_status_page" checked={formData.visible_on_status_page} onChange={handleChange} />
                         </div>

@@ -98,6 +98,10 @@ export const createStatusPage = (data) => {
     return api.post('status-pages/', data);
 };
 
+export const getStatusPageBySlug = (slug) => {
+    return api.get(`status-pages/by-slug/${slug}/`);
+};
+
 export const deleteStatusPage = (id) => {
     return api.delete(`status-pages/${id}/`);
 };

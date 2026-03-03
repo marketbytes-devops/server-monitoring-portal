@@ -6,6 +6,12 @@ class StatusPageSerializer(serializers.ModelSerializer):
         model = StatusPage
         fields = '__all__'
 
+class StatusPageDetailSerializer(serializers.ModelSerializer):
+    monitors_data = MonitoredURLSerializer(source='monitors', many=True, read_only=True)
+    class Meta:
+        model = StatusPage
+        fields = '__all__'
+
 class MaintenanceWindowSerializer(serializers.ModelSerializer):
     monitor_name = serializers.ReadOnlyField(source='monitor.name')
     class Meta:
@@ -20,7 +26,7 @@ class AlertContactSerializer(serializers.ModelSerializer):
 class UptimeRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = UptimeRecord
-        fields = ['status_code', 'response_time', 'is_up', 'checked_at', 'error_message', 'cpu_usage', 'ram_usage', 'disk_usage', 'system_uptime']
+        fields = ['status_code', 'response_time', 'is_up', 'checked_at', 'error_message']
 
 class ActivityLogSerializer(serializers.ModelSerializer):
     class Meta:

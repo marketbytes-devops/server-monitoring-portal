@@ -12,9 +12,6 @@ import {
     EyeIcon,
     ClockIcon,
     SignalIcon,
-    CommandLineIcon,
-    CpuChipIcon,
-    CircleStackIcon
 } from '@heroicons/react/24/outline';
 import { useToast } from '../components/Toast';
 
@@ -211,26 +208,15 @@ const MonitorDetail = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
-                {/* Domain & SSL Info (Sites) */}
+                {/* Security Info */}
                 <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/2 border border-black/5 space-y-10">
                     <div className="flex items-center space-x-3">
                         <ShieldCheckIcon className="w-5 h-5 text-zinc-400" />
                         <h3 className="text-lg font-medium text-black uppercase tracking-tight">
-                            Security & Domain
+                            Security
                         </h3>
                     </div>
                     <div className="space-y-8">
-                        <div>
-                            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-3">Domain Validation</p>
-                            <div className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl border border-black/5">
-                                <span className="text-xs font-medium text-black">
-                                    {domainDays !== null ? `Expires in ${domainDays} days` : 'Monitoring active'}
-                                </span>
-                                <span className="text-[8px] font-bold text-black uppercase tracking-widest">
-                                    {domainDays !== null ? 'Verified' : 'Active'}
-                                </span>
-                            </div>
-                        </div>
                         <div>
                             <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-3">SSL Certificate</p>
                             <div className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl border border-black/5">
