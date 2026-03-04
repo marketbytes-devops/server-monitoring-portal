@@ -59,7 +59,7 @@ const Dashboard = () => {
             <div className="space-y-3">
                 <div className="flex items-center space-x-3 text-[10px] font-medium text-black tracking-[0.3em] uppercase">
                     <div className="w-10 h-px bg-black"></div>
-                    <span>System Core v4.0 // Prime</span>
+                    <span>Real-Time Infrastructure Monitoring</span>
                 </div>
                 <h1 className="text-6xl font-medium text-black uppercase leading-none tracking-tighter">
                     Monitoring<span className="text-zinc-300">.</span>System

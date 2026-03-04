@@ -72,23 +72,23 @@ const IncidentDetail = () => {
 
             {/* Quick Summary Grid */}
             <div className="bg-white rounded-[3rem] p-12 shadow-2xl shadow-black/2 border border-black/5">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-                    <div className="space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div className="space-y-2 min-w-0">
                         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Root cause</p>
-                        <p className="text-lg font-medium text-black leading-tight">{incident.root_cause || 'Connection Timeout'}</p>
+                        <p className="text-lg font-medium text-black leading-tight break-all overflow-hidden">{incident.root_cause || 'Connection Timeout'}</p>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0">
                         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Status</p>
                         <div className="flex items-center space-x-3">
                             <div className={`w-2 h-2 rounded-full ${isResolved ? 'bg-black' : 'bg-red-500 animate-pulse'}`}></div>
                             <p className="text-lg font-medium text-black uppercase tracking-tight">{incident.status}</p>
                         </div>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0">
                         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Started at</p>
                         <p className="text-lg font-medium text-black leading-tight">{new Date(incident.started_at).toLocaleDateString()}<br /><span className="text-xs text-zinc-400">{new Date(incident.started_at).toLocaleTimeString()}</span></p>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0">
                         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Duration</p>
                         <p className="text-lg font-medium text-black leading-tight">{incident.duration_str}</p>
                     </div>

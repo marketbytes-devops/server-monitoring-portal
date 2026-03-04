@@ -277,7 +277,7 @@ const MonitorDetail = () => {
                                             {inc.status}
                                         </span>
                                     </td>
-                                    <td className="px-10 py-6 text-sm font-medium text-black group-hover:translate-x-1 transition-transform">{inc.root_cause || 'Connection Timeout'}</td>
+                                    <td className="px-10 py-6 text-sm font-medium text-black group-hover:translate-x-1 transition-transform max-w-xs break-all">{inc.root_cause || 'Connection Timeout'}</td>
                                     <td className="px-10 py-6 text-[10px] font-bold text-zinc-400 uppercase">{new Date(inc.started_at).toLocaleString()}</td>
                                     <td className="px-10 py-6 text-xs font-bold text-black">{inc.duration_str}</td>
                                 </tr>

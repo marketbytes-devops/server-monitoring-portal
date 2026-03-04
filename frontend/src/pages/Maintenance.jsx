@@ -12,6 +12,8 @@ import {
 import { useToast } from '../components/Toast';
 import { getAuth } from '../services/auth';
 import { getMaintenanceWindows, createMaintenanceWindow, deleteMaintenanceWindow, getMonitors } from '../services/api';
+import CustomSelect from '../components/CustomSelect';
+import CustomDateTimePicker from '../components/CustomDateTimePicker';
 
 const Maintenance = () => {
     const { addToast } = useToast();
@@ -52,6 +54,10 @@ const Maintenance = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!formData.monitor || !formData.start_time || !formData.end_time) {
+            addToast("Please complete all required fields", "warning");
+            return;
+        }
         try {
             await createMaintenanceWindow(formData);
             addToast("Maintenance window scheduled successfully.", "success");
@@ -82,6 +88,8 @@ const Maintenance = () => {
             addToast("Failed to remove window.", "error");
         }
     };
+
+    const monitorOptions = monitors.map(m => ({ value: m.id, label: m.name }));
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700 pb-20">
@@ -165,11 +173,11 @@ const Maintenance = () => {
                     <div className="animate-in slide-in-from-right-8 duration-700">
                         <div className="bg-black rounded-[2.5rem] p-10 shadow-2xl border border-white/5 space-y-8 sticky top-8">
                             <div>
-                                <h3 className="text-2xl font-medium text-white uppercase tracking-tight">Schedule Window</h3>
+                                <h2 className="text-3xl font-medium text-white uppercase tracking-tight">Schedule Window</h2>
                                 <p className="text-[10px] text-zinc-500 font-normal uppercase tracking-[0.2em] mt-1">Operational Pulse Pause</p>
                             </div>
 
-                            <form onSubmit={handleSubmit} className="space-y-6">
+                            <form onSubmit={handleSubmit} className="space-y-8">
                                 <div className="space-y-2">
                                     <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest px-1">Window Title</label>
                                     <input
@@ -182,42 +190,30 @@ const Maintenance = () => {
                                     />
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest px-1">Target Pulse Node</label>
-                                    <select
-                                        required
-                                        value={formData.monitor}
-                                        onChange={(e) => setFormData({ ...formData, monitor: e.target.value })}
-                                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm text-white focus:bg-white focus:text-black outline-none transition-all appearance-none"
-                                    >
-                                        <option value="" className="bg-zinc-900">Select Node</option>
-                                        {monitors.map(mon => (
-                                            <option key={mon.id} value={mon.id} className="bg-zinc-900">{mon.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                                <CustomSelect
+                                    label="Target Pulse Node"
+                                    options={[{ value: '', label: 'Select Node' }, ...monitorOptions]}
+                                    value={formData.monitor}
+                                    onChange={(e) => setFormData({ ...formData, monitor: e.target.value })}
+                                    name="monitor"
+                                    dark
+                                />
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest px-1">Start Time</label>
-                                        <input
-                                            type="datetime-local"
-                                            required
-                                            value={formData.start_time}
-                                            onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-[10px] text-white focus:bg-white focus:text-black outline-none transition-all"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest px-1">End Time</label>
-                                        <input
-                                            type="datetime-local"
-                                            required
-                                            value={formData.end_time}
-                                            onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-[10px] text-white focus:bg-white focus:text-black outline-none transition-all"
-                                        />
-                                    </div>
+                                <div className="grid grid-cols-1 gap-6">
+                                    <CustomDateTimePicker
+                                        label="Start Time"
+                                        name="start_time"
+                                        value={formData.start_time}
+                                        onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                                        dark
+                                    />
+                                    <CustomDateTimePicker
+                                        label="End Time"
+                                        name="end_time"
+                                        value={formData.end_time}
+                                        onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
+                                        dark
+                                    />
                                 </div>
 
                                 <div className="space-y-2">
@@ -233,9 +229,9 @@ const Maintenance = () => {
                                 <div className="pt-4">
                                     <button
                                         type="submit"
-                                        className="w-full bg-white text-black py-4 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-white/5"
+                                        className="w-full bg-white text-black py-5 rounded-2xl font-bold text-[11px] uppercase tracking-[0.3em] hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-white/5"
                                     >
-                                        Activate Window
+                                        Initialize Deployment
                                     </button>
                                 </div>
                             </form>
@@ -287,4 +283,5 @@ const SidebarItem = ({ icon, title, desc }) => (
 );
 
 export default Maintenance;
+
 
